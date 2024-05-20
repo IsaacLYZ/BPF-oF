@@ -40,6 +40,8 @@ def parse_args():
                                  "bpf-kv", "rocksdb"])
     parser.add_argument("--debug", action="store_true", default=False,
                         help="Enable debug mode.")
+    parser.add_argument("--target-ip",help="Target Ip")
+    parser.add_argument("--mnt-dev", help="Target exposed block device")
     # Add your arguments here
     return parser.parse_args()
 
@@ -127,7 +129,7 @@ def get_xrp_metadata_and_testing_dirs():
     cwd_testing = get_script_dir()
     assert os.path.basename(cwd_testing) == "testing", "Script must be run from testing directory"
     cwd = os.path.dirname(cwd_testing)
-    assert os.path.basename(cwd) == "xrp-metadata", "Script must be run from xrp-metadata/testing directory"
+    assert os.path.basename(cwd) == "bpfof-kernel-modules", "Script must be run from bpfof-kernel-modules/testing directory"
     return cwd, cwd_testing
 
 
@@ -231,7 +233,7 @@ def main():
         bpf_fs_path = "/sys/fs/bpf/simple_xrp/xrp_prog"
         sync_dir = "/nvme"
     elif args.application == "bpf-kv":
-        prog_path = "/mydata/BPF-KV/xrp-bpf/get.o"
+        prog_path = "/home/isaac/BPF-KV/xrp-bpf/get.o"
         bpf_fs_path = "/sys/fs/bpf/bpf-kv/oliver_agg"
         sync_dir = "/nvme"
     elif args.application == "rocksdb":
@@ -242,8 +244,11 @@ def main():
         raise ValueError("Invalid application")
 
     if args.environment == "vm":
-        target_ip = "192.168.53.3"
-        target_disk = "/dev/nvme0n1"
+        if args.target_ip:
+            target_ip=args.target_ip
+        else:
+            target_ip = "192.168.177.129"
+        target_disk = args.mnt_dev
         host_disk = "/dev/nvme0n1"
     elif args.environment == "cloudlab-nvmeof-bench" and args.rdma_offload_machines:
         target_ip = check_output(["getent", "hosts", "nvmeof-target"]).split()[0].decode()
